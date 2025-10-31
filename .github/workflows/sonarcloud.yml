@@ -53,16 +53,35 @@ jobs:
         run: |
           # Extract coverage from JaCoCo XML report
           if [ -f "target/site/jacoco/jacoco.xml" ]; then
-            COVERAGE=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counter = root.find(\".//counter[@type='INSTRUCTION']\"); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
-            echo "📊 Current Coverage: ${COVERAGE}%"
-            echo "🎯 Required Coverage: 90%"
+            # Get both instruction and line coverage
+            INSTRUCTION_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counter = root.find(\".//counter[@type='INSTRUCTION']\"); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
+            LINE_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counter = root.find(\".//counter[@type='LINE']\"); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
             
-            if [ "$COVERAGE" -lt 90 ]; then
-              echo "❌ Coverage ${COVERAGE}% is below 90% threshold"
+            echo "📊 Coverage Results:"
+            echo "   Instruction Coverage: ${INSTRUCTION_COV}%"
+            echo "   Line Coverage: ${LINE_COV}%"
+            echo "🎯 Required: 90% for both metrics"
+            echo ""
+            
+            FAILED=0
+            if [ "$INSTRUCTION_COV" -lt 90 ]; then
+              echo "❌ Instruction coverage ${INSTRUCTION_COV}% is below 90% threshold"
+              FAILED=1
+            else
+              echo "✅ Instruction coverage ${INSTRUCTION_COV}% meets threshold"
+            fi
+            
+            if [ "$LINE_COV" -lt 90 ]; then
+              echo "❌ Line coverage ${LINE_COV}% is below 90% threshold"
+              FAILED=1
+            else
+              echo "✅ Line coverage ${LINE_COV}% meets threshold"
+            fi
+            
+            if [ "$FAILED" -eq 1 ]; then
+              echo ""
               echo "💡 Add more tests to increase coverage"
               exit 1
-            else
-              echo "✅ Coverage ${COVERAGE}% meets 90% threshold"
             fi
           else
             echo "⚠️  No coverage report found, skipping check"
