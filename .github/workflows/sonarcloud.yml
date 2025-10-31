@@ -49,5 +49,20 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }}
       
+      - name: Check Code Coverage (90% threshold)
+        run: |
+          # Extract coverage from JaCoCo report
+          COVERAGE=$(grep -oP 'Total.*?(\d+)%' target/site/jacoco/index.html | grep -oP '\d+' | head -1 || echo "0")
+          echo "📊 Current Coverage: ${COVERAGE}%"
+          echo "🎯 Required Coverage: 90%"
+          
+          if [ "$COVERAGE" -lt 90 ]; then
+            echo "❌ Coverage ${COVERAGE}% is below 90% threshold"
+            echo "💡 Add more tests to increase coverage"
+            exit 1
+          else
+            echo "✅ Coverage ${COVERAGE}% meets 90% threshold"
+          fi
+      
       # Note: The sonar.projectKey and sonar.organization values above should match
       # your SonarCloud project setup. Update them after creating your project on SonarCloud.
