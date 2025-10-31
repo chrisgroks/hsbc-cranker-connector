@@ -140,3 +140,15 @@ Runtime.getRuntime().addShutdownHook(new Thread(() -> {
     targetServer.stop();
 }));
 ```
+
+
+## Security CI/CD Pipeline Testing
+
+This PR tests the new security and quality checks:
+- SonarCloud - Code quality and security analysis
+- Snyk - Dependency vulnerability scanning
+- Semgrep - Fast security pattern detection
+- Dependabot - Automated dependency updates (already active)
+
+All checks should run automatically on this PR.
+
