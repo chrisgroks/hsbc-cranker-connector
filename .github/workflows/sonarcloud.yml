@@ -1,0 +1,52 @@
+name: SonarCloud Analysis
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      
+      - name: Build and analyze with Maven
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed for PR decoration
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}      # Add this secret in GitHub repo settings
+        run: |
+          mvn --batch-mode verify \
+            org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+            -Dsonar.projectKey=chrisgroks_hsbc-cranker-connector \
+            -Dsonar.organization=chrisgroks \
+            -Dsonar.host.url=https://sonarcloud.io
+      
+      # Note: The sonar.projectKey and sonar.organization values above should match
+      # your SonarCloud project setup. Update them after creating your project on SonarCloud.

@@ -1,0 +1,60 @@
+version: 2
+
+# Dependabot configuration for automated dependency updates and security alerts
+# Documentation: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+updates:
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 10
+  
+  # Keep Maven dependencies up to date
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "java"
+    # Group minor and patch updates together to reduce PR noise
+    groups:
+      test-dependencies:
+        patterns:
+          - "org.junit.jupiter:*"
+          - "org.hamcrest:*"
+          - "org.slf4j:*"
+        update-types:
+          - "minor"
+          - "patch"
+      maven-plugins:
+        patterns:
+          - "org.apache.maven.plugins:*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Don't update these (if needed)
+    # ignore:
+    #   - dependency-name: "some-dependency"
+    #     versions: ["1.x"]
+    open-pull-requests-limit: 5
+    
+# Note: Dependabot will automatically create PRs for:
+# - Security vulnerabilities (always, regardless of schedule)
+# - Version updates (based on schedule above)
+# 
+# All Dependabot PRs will trigger your CI workflows including the new
+# security scans (Snyk, Semgrep, SonarCloud) before they can be merged.
