@@ -46,7 +46,8 @@ jobs:
             org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
             -Dsonar.projectKey=chrisgroks_hsbc-cranker-connector \
             -Dsonar.organization=chrisgroks \
-            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
       
       # Note: The sonar.projectKey and sonar.organization values above should match
       # your SonarCloud project setup. Update them after creating your project on SonarCloud.
