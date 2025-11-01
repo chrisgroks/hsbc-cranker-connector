@@ -53,9 +53,9 @@ jobs:
         run: |
           # Extract coverage from JaCoCo XML report
           if [ -f "target/site/jacoco/jacoco.xml" ]; then
-            # Get both instruction and line coverage
-            INSTRUCTION_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counter = root.find(\".//counter[@type='INSTRUCTION']\"); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
-            LINE_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counter = root.find(\".//counter[@type='LINE']\"); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
+            # Get both instruction and line coverage from report-level counters (not class-level)
+            INSTRUCTION_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counters = root.findall('./counter[@type=\"INSTRUCTION\"]'); counter = counters[-1] if counters else root.find('.//counter[@type=\"INSTRUCTION\"]'); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
+            LINE_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counters = root.findall('./counter[@type=\"LINE\"]'); counter = counters[-1] if counters else root.find('.//counter[@type=\"LINE\"]'); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
             
             echo "📊 Coverage Results:"
             echo "   Instruction Coverage: ${INSTRUCTION_COV}%"
