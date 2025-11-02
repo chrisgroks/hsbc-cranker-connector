@@ -18,25 +18,7 @@ class HttpUtils {
 
     static final List<String> DISALLOWED_REQUEST_HEADERS;
     static {
-        // Older JDK clients blocked headers they shouldn't. From JDK 12 these can be turned off
-        // with a system property. See https://bugs.openjdk.java.net/browse/JDK-8213189
-        // For JDK 11, any of "date", "from", "host", "origin", "referer", "via", "warning" will not be proxied.
-        // Upgrade to JDK 12 or newer if any of these are important.
-        setPropertyIfUnset("jdk.httpclient.allowRestrictedHeaders", "host,date,via,warning,from,origin,referer");
-
-        // This detects these for the current JDK and will not forward any banned ones.
-        HttpRequest.Builder builder = HttpRequest.newBuilder();
-        Set<String> headersThatJDKMayReject = Set.of("date", "expect", "from", "host", "origin", "referer", "via", "warning");
-        List<String> disallowed = new ArrayList<>();
-        for (String header : headersThatJDKMayReject) {
-            try {
-                builder.header(header, "dummy");
-            } catch (IllegalArgumentException e) {
-                disallowed.add(header);
-            }
-        }
-        disallowed.add("content-length"); // as the body publisher adds it
-        DISALLOWED_REQUEST_HEADERS = Collections.unmodifiableList(disallowed);
+        DISALLOWED_REQUEST_HEADERS = Collections.unmodifiableList(List.of("content-length"));
     }
 
     static String urlEncode(String value) {
@@ -50,13 +32,6 @@ class HttpUtils {
             trustAll(builder);
         }
         return builder;
-    }
-
-    private static void setPropertyIfUnset(String key, String value) {
-        String custom = System.getProperty(key, null);
-        if (custom == null) {
-            System.setProperty(key, value);
-        }
     }
 
     private static void trustAll(HttpClient.Builder builder) {
