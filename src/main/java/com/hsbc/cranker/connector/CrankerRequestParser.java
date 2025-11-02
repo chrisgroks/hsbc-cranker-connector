@@ -58,7 +58,11 @@ class CrankerRequestParser {
             if (headerLine.toLowerCase().startsWith("content-length:")) {
                 String[] split = headerLine.split(":");
                 if (split.length == 2) {
-                    return Long.parseLong(split[1].trim());
+                    try {
+                        return Long.parseLong(split[1].trim());
+                    } catch (NumberFormatException e) {
+                        return -1;
+                    }
                 }
             }
         }
