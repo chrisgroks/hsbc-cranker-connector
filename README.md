@@ -1,7 +1,7 @@
 cranker-connector
 =================
 
-A cranker connector that has no external dependencies. Requires JDK11 or later.
+A cranker connector that has no external dependencies. Requires JDK23 or later.
 
 Background
 ----------
