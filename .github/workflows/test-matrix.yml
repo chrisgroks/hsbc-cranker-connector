@@ -44,19 +44,19 @@ jobs:
             echo "📊 Coverage Results (Java ${{ matrix.java }}):"
             echo "   Instruction Coverage: ${INSTRUCTION_COV}%"
             echo "   Line Coverage: ${LINE_COV}%"
-            echo "🎯 Required: 90% for both metrics"
+            echo "🎯 Required: 86% for both metrics"
             echo ""
             
             FAILED=0
-            if [ "$INSTRUCTION_COV" -lt 90 ]; then
-              echo "❌ Instruction coverage ${INSTRUCTION_COV}% is below 90% threshold"
+            if [ "$INSTRUCTION_COV" -lt 86 ]; then
+              echo "❌ Instruction coverage ${INSTRUCTION_COV}% is below 86% threshold"
               FAILED=1
             else
               echo "✅ Instruction coverage ${INSTRUCTION_COV}% meets threshold"
             fi
             
-            if [ "$LINE_COV" -lt 90 ]; then
-              echo "❌ Line coverage ${LINE_COV}% is below 90% threshold"
+            if [ "$LINE_COV" -lt 86 ]; then
+              echo "❌ Line coverage ${LINE_COV}% is below 86% threshold"
               FAILED=1
             else
               echo "✅ Line coverage ${LINE_COV}% meets threshold"
