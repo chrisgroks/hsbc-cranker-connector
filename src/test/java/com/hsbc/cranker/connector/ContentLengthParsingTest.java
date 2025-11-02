@@ -1,6 +1,9 @@
 package com.hsbc.cranker.connector;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -8,42 +11,36 @@ import static org.hamcrest.Matchers.is;
 
 class ContentLengthParsingTest {
 
-    @Test
-    void crankerRequestParser_bodyLength_returnsMinusOneForMalformedNumericContentLength() {
-        assertThat(parseCrankerRequestBodyLength("Content-Length: abc"), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length: 12.5"), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length: not-a-number"), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("content-length: xyz123"), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("content-length: 123abc"), is(-1L));
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "Content-Length: abc",
+        "Content-Length: 12.5",
+        "Content-Length: not-a-number",
+        "content-length: xyz123",
+        "content-length: 123abc",
+        "Content-Length: ",
+        "Content-Length:   ",
+        "Content-Length:\t",
+        "content-length: 999999999999999999999999999999",
+        "content-length: 99999999999999999999",
+        "Content-Length: 100$",
+        "Content-Length: 1,000",
+        "Content-Length: 1_000"
+    })
+    void crankerRequestParser_bodyLength_returnsMinusOneForInvalidContentLength(String header) {
+        assertThat(parseCrankerRequestBodyLength(header), is(-1L));
     }
 
-    @Test
-    void crankerRequestParser_bodyLength_returnsMinusOneForEmptyContentLength() {
-        assertThat(parseCrankerRequestBodyLength("Content-Length: "), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length:   "), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length:\t"), is(-1L));
-    }
-
-    @Test
-    void crankerRequestParser_bodyLength_returnsMinusOneForOverflowContentLength() {
-        assertThat(parseCrankerRequestBodyLength("content-length: 999999999999999999999999999999"), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("content-length: 99999999999999999999"), is(-1L));
-    }
-
-    @Test
-    void crankerRequestParser_bodyLength_returnsMinusOneForSpecialCharactersInContentLength() {
-        assertThat(parseCrankerRequestBodyLength("Content-Length: 100$"), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length: 1,000"), is(-1L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length: 1_000"), is(-1L));
-    }
-
-    @Test
-    void crankerRequestParser_bodyLength_returnsCorrectValueForValidContentLength() {
-        assertThat(parseCrankerRequestBodyLength("Content-Length: 100"), is(100L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length: 0"), is(0L));
-        assertThat(parseCrankerRequestBodyLength("content-length: 12345"), is(12345L));
-        assertThat(parseCrankerRequestBodyLength("Content-Length:   500  "), is(500L));
-        assertThat(parseCrankerRequestBodyLength("CONTENT-LENGTH: 999"), is(999L));
+    @ParameterizedTest
+    @CsvSource({
+        "Content-Length: 100, 100",
+        "Content-Length: 0, 0",
+        "content-length: 12345, 12345",
+        "Content-Length:   500  , 500",
+        "CONTENT-LENGTH: 999, 999"
+    })
+    void crankerRequestParser_bodyLength_returnsCorrectValueForValidContentLength(String header, long expected) {
+        assertThat(parseCrankerRequestBodyLength(header), is(expected));
     }
 
     @Test
@@ -77,42 +74,36 @@ class ContentLengthParsingTest {
         assertThat(parser.bodyLength(), is(999L));
     }
 
-    @Test
-    void connectorSocketV3_bodyLength_returnsMinusOneForMalformedNumericContentLength() throws Exception {
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: abc"), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: 12.5"), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: not-a-number"), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("content-length: xyz123"), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("content-length: 123abc"), is(-1L));
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "Content-Length: abc",
+        "Content-Length: 12.5",
+        "Content-Length: not-a-number",
+        "content-length: xyz123",
+        "content-length: 123abc",
+        "Content-Length: ",
+        "Content-Length:   ",
+        "Content-Length:\t",
+        "content-length: 999999999999999999999999999999",
+        "content-length: 99999999999999999999",
+        "Content-Length: 100$",
+        "Content-Length: 1,000",
+        "Content-Length: 1_000"
+    })
+    void connectorSocketV3_bodyLength_returnsMinusOneForInvalidContentLength(String header) throws Exception {
+        assertThat(parseConnectorSocketV3BodyLength(header), is(-1L));
     }
 
-    @Test
-    void connectorSocketV3_bodyLength_returnsMinusOneForEmptyContentLength() throws Exception {
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: "), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length:   "), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length:\t"), is(-1L));
-    }
-
-    @Test
-    void connectorSocketV3_bodyLength_returnsMinusOneForOverflowContentLength() throws Exception {
-        assertThat(parseConnectorSocketV3BodyLength("content-length: 999999999999999999999999999999"), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("content-length: 99999999999999999999"), is(-1L));
-    }
-
-    @Test
-    void connectorSocketV3_bodyLength_returnsMinusOneForSpecialCharactersInContentLength() throws Exception {
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: 100$"), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: 1,000"), is(-1L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: 1_000"), is(-1L));
-    }
-
-    @Test
-    void connectorSocketV3_bodyLength_returnsCorrectValueForValidContentLength() throws Exception {
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: 100"), is(100L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length: 0"), is(0L));
-        assertThat(parseConnectorSocketV3BodyLength("content-length: 12345"), is(12345L));
-        assertThat(parseConnectorSocketV3BodyLength("Content-Length:   500  "), is(500L));
-        assertThat(parseConnectorSocketV3BodyLength("CONTENT-LENGTH: 999"), is(999L));
+    @ParameterizedTest
+    @CsvSource({
+        "Content-Length: 100, 100",
+        "Content-Length: 0, 0",
+        "content-length: 12345, 12345",
+        "Content-Length:   500  , 500",
+        "CONTENT-LENGTH: 999, 999"
+    })
+    void connectorSocketV3_bodyLength_returnsCorrectValueForValidContentLength(String header, long expected) throws Exception {
+        assertThat(parseConnectorSocketV3BodyLength(header), is(expected));
     }
 
     @Test
@@ -165,7 +156,7 @@ class ContentLengthParsingTest {
         Class<?>[] innerClasses = ConnectorSocketV3.class.getDeclaredClasses();
         Class<?> crankerRequestClass = null;
         for (Class<?> innerClass : innerClasses) {
-            if (innerClass.getSimpleName().equals("CrankerRequest")) {
+            if ("CrankerRequest".equals(innerClass.getSimpleName())) {
                 crankerRequestClass = innerClass;
                 break;
             }
