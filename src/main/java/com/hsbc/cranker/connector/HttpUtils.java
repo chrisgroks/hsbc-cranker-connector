@@ -18,6 +18,8 @@ class HttpUtils {
 
     static final List<String> DISALLOWED_REQUEST_HEADERS;
     static {
+        setPropertyIfUnset("jdk.httpclient.allowRestrictedHeaders", "host,date,via,warning,from,origin,referer");
+        
         DISALLOWED_REQUEST_HEADERS = Collections.unmodifiableList(List.of("content-length"));
     }
 
@@ -33,6 +35,14 @@ class HttpUtils {
         }
         return builder;
     }
+    private static void setPropertyIfUnset(String key, String value) {
+        String custom = System.getProperty(key, null);
+        if (custom == null) {
+            System.setProperty(key, value);
+        }
+    }
+
+
 
     private static void trustAll(HttpClient.Builder builder) {
         try {
