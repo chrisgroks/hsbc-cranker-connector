@@ -1,0 +1,80 @@
+name: Multi-Version Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test on Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java: [17, 21]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Build and Test with Maven
+        run: mvn --batch-mode clean verify
+      
+      - name: Check Code Coverage
+        run: |
+          if [ -f "target/site/jacoco/jacoco.xml" ]; then
+            INSTRUCTION_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counters = root.findall('./counter[@type=\"INSTRUCTION\"]'); counter = counters[-1] if counters else root.find('.//counter[@type=\"INSTRUCTION\"]'); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
+            LINE_COV=$(python3 -c "import xml.etree.ElementTree as ET; tree = ET.parse('target/site/jacoco/jacoco.xml'); root = tree.getroot(); counters = root.findall('./counter[@type=\"LINE\"]'); counter = counters[-1] if counters else root.find('.//counter[@type=\"LINE\"]'); covered = int(counter.get('covered')); missed = int(counter.get('missed')); print(int((covered / (covered + missed)) * 100))")
+            
+            echo "📊 Coverage Results (Java ${{ matrix.java }}):"
+            echo "   Instruction Coverage: ${INSTRUCTION_COV}%"
+            echo "   Line Coverage: ${LINE_COV}%"
+            echo "🎯 Required: 85% for both metrics"
+            echo ""
+            
+            FAILED=0
+            if [ "$INSTRUCTION_COV" -lt 85 ]; then
+              echo "❌ Instruction coverage ${INSTRUCTION_COV}% is below 85% threshold"
+              FAILED=1
+            else
+              echo "✅ Instruction coverage ${INSTRUCTION_COV}% meets threshold"
+            fi
+            
+            if [ "$LINE_COV" -lt 85 ]; then
+              echo "❌ Line coverage ${LINE_COV}% is below 85% threshold"
+              FAILED=1
+            else
+              echo "✅ Line coverage ${LINE_COV}% meets threshold"
+            fi
+            
+            if [ "$FAILED" -eq 1 ]; then
+              echo ""
+              echo "💡 Add more tests to increase coverage"
+              exit 1
+            fi
+          else
+            echo "⚠️  No coverage report found, skipping check"
+          fi
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-java-${{ matrix.java }}
+          path: target/surefire-reports/
+          retention-days: 7
