@@ -2,43 +2,52 @@ package com.hsbc.cranker.connector;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 class ContentLengthParsingTest {
 
+    private static Stream<String> invalidContentLengthHeaders() {
+        return Stream.of(
+            "Content-Length: abc",
+            "Content-Length: 12.5",
+            "Content-Length: not-a-number",
+            "content-length: xyz123",
+            "content-length: 123abc",
+            "Content-Length: ",
+            "Content-Length:   ",
+            "Content-Length:\t",
+            "content-length: 999999999999999999999999999999",
+            "content-length: 99999999999999999999",
+            "Content-Length: 100$",
+            "Content-Length: 1,000",
+            "Content-Length: 1_000"
+        );
+    }
+
+    private static Stream<Arguments> validContentLengthHeaders() {
+        return Stream.of(
+            Arguments.of("Content-Length: 100", 100L),
+            Arguments.of("Content-Length: 0", 0L),
+            Arguments.of("content-length: 12345", 12345L),
+            Arguments.of("Content-Length:   500  ", 500L),
+            Arguments.of("CONTENT-LENGTH: 999", 999L)
+        );
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {
-        "Content-Length: abc",
-        "Content-Length: 12.5",
-        "Content-Length: not-a-number",
-        "content-length: xyz123",
-        "content-length: 123abc",
-        "Content-Length: ",
-        "Content-Length:   ",
-        "Content-Length:\t",
-        "content-length: 999999999999999999999999999999",
-        "content-length: 99999999999999999999",
-        "Content-Length: 100$",
-        "Content-Length: 1,000",
-        "Content-Length: 1_000"
-    })
+    @MethodSource("invalidContentLengthHeaders")
     void crankerRequestParser_bodyLength_returnsMinusOneForInvalidContentLength(String header) {
         assertThat(parseCrankerRequestBodyLength(header), is(-1L));
     }
 
     @ParameterizedTest
-    @CsvSource({
-        "Content-Length: 100, 100",
-        "Content-Length: 0, 0",
-        "content-length: 12345, 12345",
-        "Content-Length:   500  , 500",
-        "CONTENT-LENGTH: 999, 999"
-    })
+    @MethodSource("validContentLengthHeaders")
     void crankerRequestParser_bodyLength_returnsCorrectValueForValidContentLength(String header, long expected) {
         assertThat(parseCrankerRequestBodyLength(header), is(expected));
     }
@@ -75,33 +84,13 @@ class ContentLengthParsingTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {
-        "Content-Length: abc",
-        "Content-Length: 12.5",
-        "Content-Length: not-a-number",
-        "content-length: xyz123",
-        "content-length: 123abc",
-        "Content-Length: ",
-        "Content-Length:   ",
-        "Content-Length:\t",
-        "content-length: 999999999999999999999999999999",
-        "content-length: 99999999999999999999",
-        "Content-Length: 100$",
-        "Content-Length: 1,000",
-        "Content-Length: 1_000"
-    })
+    @MethodSource("invalidContentLengthHeaders")
     void connectorSocketV3_bodyLength_returnsMinusOneForInvalidContentLength(String header) throws Exception {
         assertThat(parseConnectorSocketV3BodyLength(header), is(-1L));
     }
 
     @ParameterizedTest
-    @CsvSource({
-        "Content-Length: 100, 100",
-        "Content-Length: 0, 0",
-        "content-length: 12345, 12345",
-        "Content-Length:   500  , 500",
-        "CONTENT-LENGTH: 999, 999"
-    })
+    @MethodSource("validContentLengthHeaders")
     void connectorSocketV3_bodyLength_returnsCorrectValueForValidContentLength(String header, long expected) throws Exception {
         assertThat(parseConnectorSocketV3BodyLength(header), is(expected));
     }
@@ -156,7 +145,7 @@ class ContentLengthParsingTest {
         Class<?>[] innerClasses = ConnectorSocketV3.class.getDeclaredClasses();
         Class<?> crankerRequestClass = null;
         for (Class<?> innerClass : innerClasses) {
-            if ("CrankerRequest".equals(innerClass.getSimpleName())) {
+            if ("com.hsbc.cranker.connector.ConnectorSocketV3$CrankerRequest".equals(innerClass.getName())) {
                 crankerRequestClass = innerClass;
                 break;
             }
