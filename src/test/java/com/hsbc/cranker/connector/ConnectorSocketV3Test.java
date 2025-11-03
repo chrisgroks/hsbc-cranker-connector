@@ -9,73 +9,49 @@ class ConnectorSocketV3Test {
 
     @Test
     void crankerRequest_bodyLength_returnsLengthForValidContentLength() {
-        String msg = "POST /api/test HTTP/1.1\n" +
-                    "Content-Length:12345\n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.validContentLengthMessage(12345, false));
         assertThat(request.bodyLength(), is(12345L));
     }
 
     @Test
     void crankerRequest_bodyLength_returnsNegativeOneForNonNumericContentLength() {
-        String msg = "POST /api/test HTTP/1.1\n" +
-                    "Content-Length:abc\n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.nonNumericContentLengthMessage(false));
         assertThat(request.bodyLength(), is(-1L));
     }
 
     @Test
     void crankerRequest_bodyLength_returnsNegativeOneForDecimalContentLength() {
-        String msg = "POST /api/test HTTP/1.1\n" +
-                    "Content-Length:12.5\n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.decimalContentLengthMessage(false));
         assertThat(request.bodyLength(), is(-1L));
     }
 
     @Test
     void crankerRequest_bodyLength_returnsNegativeOneForEmptyContentLength() {
-        String msg = "POST /api/test HTTP/1.1\n" +
-                    "Content-Length:\n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.emptyContentLengthMessage(false));
         assertThat(request.bodyLength(), is(-1L));
     }
 
     @Test
     void crankerRequest_bodyLength_returnsNegativeOneForWhitespaceOnlyContentLength() {
-        String msg = "POST /api/test HTTP/1.1\n" +
-                    "Content-Length:   \n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.whitespaceContentLengthMessage(false));
         assertThat(request.bodyLength(), is(-1L));
     }
 
     @Test
     void crankerRequest_bodyLength_returnsNegativeOneWhenNoContentLengthHeader() {
-        String msg = "GET /api/test HTTP/1.1\n" +
-                    "Host: example.com\n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.noContentLengthMessage(false));
         assertThat(request.bodyLength(), is(-1L));
     }
 
     @Test
     void crankerRequest_bodyLength_handlesContentLengthWithExtraCharacters() {
-        String msg = "POST /api/test HTTP/1.1\n" +
-                    "Content-Length:123abc\n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.extraCharactersContentLengthMessage(false));
         assertThat(request.bodyLength(), is(-1L));
     }
 
     @Test
     void crankerRequest_bodyLength_handlesNegativeContentLength() {
-        String msg = "POST /api/test HTTP/1.1\n" +
-                    "Content-Length:-100\n" +
-                    "\n";
-        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(msg);
+        ConnectorSocketV3.CrankerRequest request = new ConnectorSocketV3.CrankerRequest(ContentLengthTestData.negativeContentLengthMessage(false));
         assertThat(request.bodyLength(), is(-100L));
     }
 }
