@@ -677,7 +677,7 @@ public class ConnectorSocketV3 implements WebSocket.Listener, ConnectorSocket {
         }
     }
 
-    private class CrankerRequest {
+    static class CrankerRequest {
 
         public String httpMethod;
         public String dest;
