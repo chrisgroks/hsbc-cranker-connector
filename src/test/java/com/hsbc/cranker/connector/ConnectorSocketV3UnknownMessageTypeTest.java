@@ -197,6 +197,86 @@ public class ConnectorSocketV3UnknownMessageTypeTest {
         executor.shutdown();
     }
 
+    @Test
+    void testOnPongHandling() throws Exception {
+        HttpClient httpClient = HttpClient.newHttpClient();
+        URI targetURI = URI.create("http://localhost:8080");
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        
+        ConnectorSocketV3 socket = new ConnectorSocketV3(
+            targetURI,
+            httpClient,
+            new ConnectorSocketListener() {
+                @Override
+                public void onClose(ConnectorSocket socket, Throwable error) {}
+                
+                @Override
+                public void onConnectionAcquired(ConnectorSocket socket) {}
+            },
+            new ProxyEventListener() {},
+            executor
+        );
+        
+        final boolean[] requestCalled = new boolean[1];
+        
+        WebSocket mockWebSocket = new WebSocket() {
+            @Override
+            public CompletableFuture<WebSocket> sendText(CharSequence data, boolean last) {
+                return CompletableFuture.completedFuture(this);
+            }
+            
+            @Override
+            public CompletableFuture<WebSocket> sendBinary(ByteBuffer data, boolean last) {
+                return CompletableFuture.completedFuture(this);
+            }
+            
+            @Override
+            public CompletableFuture<WebSocket> sendPing(ByteBuffer message) {
+                return CompletableFuture.completedFuture(this);
+            }
+            
+            @Override
+            public CompletableFuture<WebSocket> sendPong(ByteBuffer message) {
+                return CompletableFuture.completedFuture(this);
+            }
+            
+            @Override
+            public CompletableFuture<WebSocket> sendClose(int statusCode, String reason) {
+                return CompletableFuture.completedFuture(this);
+            }
+            
+            @Override
+            public void request(long n) {
+                requestCalled[0] = true;
+            }
+            
+            @Override
+            public String getSubprotocol() {
+                return "";
+            }
+            
+            @Override
+            public boolean isOutputClosed() {
+                return false;
+            }
+            
+            @Override
+            public boolean isInputClosed() {
+                return false;
+            }
+            
+            @Override
+            public void abort() {}
+        };
+        
+        socket.onOpen(mockWebSocket);
+        socket.onPong(mockWebSocket, ByteBuffer.allocate(0));
+        
+        assertTrue(requestCalled[0], "WebSocket.request(1) should be called after onPong");
+        
+        executor.shutdown();
+    }
+
     private WebSocket createMockWebSocket(final int[] closeStatusCode, final String[] closeReason) {
         return new WebSocket() {
             @Override
