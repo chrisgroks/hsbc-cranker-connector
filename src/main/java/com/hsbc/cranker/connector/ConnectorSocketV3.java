@@ -346,9 +346,13 @@ public class ConnectorSocketV3 implements WebSocket.Listener, ConnectorSocket {
                 break;
             }
             default: {
-                // not support types
+                String errorMsg = String.format("Unknown message type: %d (requestId=%d)", messageType, requestId);
+                
+                System.err.println("Protocol violation: " + errorMsg);
+                
+                closeWebsocket(State.ERROR, 1002, new IllegalStateException(errorMsg));
+                
                 releaseByteBuffer.complete(null);
-                webSocket.request(1);
                 break;
             }
         }
